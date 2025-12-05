@@ -3,11 +3,13 @@ import Main from "./components/Main";
 import Loader from "./components/Loader";
 import Error from "./components/Error";
 import StartScreen from "./components/StartScreen";
+import Question from "./components/Question";
 import { useEffect, useReducer } from "react";
 
 const initialState = {
   questions: [],
   status: "loading", // loading, error, ready, active, finished
+  index: 0,
 };
 
 function reducer(state, action) {
@@ -22,13 +24,18 @@ function reducer(state, action) {
       return { ...state, status: "active" };
     case "finished":
       return { ...state, status: "finished" };
+    case "nextQuestion":
+      return { ...state, index: state.index + 1 };
     default:
       throw new Error("Action is unknown");
   }
 }
 
 function App() {
-  const [{ questions, status }, dispatch] = useReducer(reducer, initialState);
+  const [{ questions, status, index }, dispatch] = useReducer(
+    reducer,
+    initialState
+  );
   const questionsLength = questions.length;
 
   useEffect(function () {
@@ -51,8 +58,13 @@ function App() {
         {status === "loading" && <Loader />}
         {status === "error" && <Error />}
         {status === "ready" && (
-          <StartScreen questionsLength={questionsLength} />
+          <StartScreen
+            questionsLength={questionsLength}
+            onStart={() => dispatch({ type: "active" })}
+          />
         )}
+        {status === "active" && <Question question={questions[index]} />}
+        {status === "finished" && <Loader />}
       </Main>
     </div>
   );
