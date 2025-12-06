@@ -4,6 +4,7 @@ import Loader from "./components/Loader";
 import Error from "./components/Error";
 import StartScreen from "./components/StartScreen";
 import Question from "./components/Question";
+import NextButton from "./components/NextButton";
 import { useEffect, useReducer } from "react";
 
 const initialState = {
@@ -11,6 +12,7 @@ const initialState = {
   status: "loading", // loading, error, ready, active, finished
   index: 0,
   answer: null,
+  points: 0,
 };
 
 function reducer(state, action) {
@@ -26,9 +28,19 @@ function reducer(state, action) {
     case "finished":
       return { ...state, status: "finished" };
     case "nextQuestion":
-      return { ...state, index: state.index + 1 };
-    case "newAnswer":
-      return { ...state, answer: action.payload };
+      return { ...state, index: state.index + 1, answer: null };
+    case "newAnswer": {
+      const question = state.questions.at(state.index);
+
+      return {
+        ...state,
+        answer: action.payload,
+        points:
+          action.payload === question.correctOption
+            ? state.points + question.points
+            : state.points,
+      };
+    }
     default:
       throw new Error("Action is unknown");
   }
@@ -40,8 +52,6 @@ function App() {
     initialState
   );
   const questionsLength = questions.length;
-
-  console.log(answer)
 
   useEffect(function () {
     async function fetchData() {
@@ -69,11 +79,14 @@ function App() {
           />
         )}
         {status === "active" && (
-          <Question
-            question={questions[index]}
-            dispatch={dispatch}
-            answer={answer}
-          />
+          <>
+            <Question
+              question={questions[index]}
+              dispatch={dispatch}
+              answer={answer}
+            />
+            <NextButton dispatch={dispatch} answer={answer} />
+          </>
         )}
         {status === "finished" && <Loader />}
       </Main>
