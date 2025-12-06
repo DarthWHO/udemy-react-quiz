@@ -1,3 +1,5 @@
+import { useEffect, useReducer } from "react";
+
 import Header from "./components/Header";
 import Main from "./components/Main";
 import Loader from "./components/Loader";
@@ -9,7 +11,6 @@ import Progress from "./components/Progress";
 import FinishScreen from "./components/FinishScreen";
 import Timer from "./components/Timer";
 import Footer from "./components/Footer";
-import { useEffect, useReducer } from "react";
 
 const initialState = {
   questions: [],
@@ -18,7 +19,10 @@ const initialState = {
   answer: null,
   points: 0,
   highscore: 0,
+  timeRemaining: 0,
 };
+
+const SECS_PER_QUESTION = 30;
 
 function reducer(state, action) {
   switch (action.type) {
@@ -34,7 +38,11 @@ function reducer(state, action) {
     case "loading":
       return { ...state, status: "loading" };
     case "active":
-      return { ...state, status: "active" };
+      return {
+        ...state,
+        status: "active",
+        timeRemaining: state.questions.length * SECS_PER_QUESTION,
+      };
     case "finish":
       return {
         ...state,
@@ -64,14 +72,23 @@ function reducer(state, action) {
         highscore: state.highscore,
       };
 
+    case "tick":
+      return {
+        ...state,
+        timeRemaining: state.timeRemaining - 1,
+        status: state.timeRemaining === 0 ? "finished" : state.status,
+      };
+
     default:
       throw new Error("Action is unknown");
   }
 }
 
 function App() {
-  const [{ questions, status, index, answer, points, highscore }, dispatch] =
-    useReducer(reducer, initialState);
+  const [
+    { questions, status, index, answer, points, highscore, timeRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
   const questionsLength = questions.length;
   const totalPoints = questions.reduce((acc, currentQuestion) => {
     return currentQuestion.points + acc;
@@ -89,8 +106,6 @@ function App() {
     }
     fetchData();
   }, []);
-
-  const timeReamaining = "6:01";
 
   return (
     <div className="app">
@@ -119,7 +134,7 @@ function App() {
               answer={answer}
             />
             <Footer>
-              <Timer timeReamaining={timeReamaining} dispatch={dispatch} />{" "}
+              <Timer timeRemaining={timeRemaining} dispatch={dispatch} />{" "}
               <NextButton
                 dispatch={dispatch}
                 answer={answer}
