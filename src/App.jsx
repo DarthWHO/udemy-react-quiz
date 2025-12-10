@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from "react";
+import { useEffect } from "react";
 
 import Header from "./components/Header";
 import Main from "./components/Main";
@@ -11,101 +11,26 @@ import Progress from "./components/Progress";
 import FinishScreen from "./components/FinishScreen";
 import Timer from "./components/Timer";
 import Footer from "./components/Footer";
-
-const initialState = {
-  questions: [],
-  status: "loading", // loading, error, ready, active, finished
-  index: 0,
-  answer: null,
-  points: 0,
-  highscore: 0,
-  timeRemaining: 0,
-};
-
-const SECS_PER_QUESTION = 30;
-
-function reducer(state, action) {
-  switch (action.type) {
-    case "dataReceived": {
-      return {
-        ...state,
-        questions: action.payload,
-        status: "ready",
-      };
-    }
-    case "error":
-      return { ...state, status: "error" };
-    case "loading":
-      return { ...state, status: "loading" };
-    case "active":
-      return {
-        ...state,
-        status: "active",
-        timeRemaining: state.questions.length * SECS_PER_QUESTION,
-      };
-    case "finish":
-      return {
-        ...state,
-        status: "finished",
-        highscore:
-          state.points > state.highscore ? state.points : state.highscore,
-      };
-    case "nextQuestion":
-      return { ...state, index: state.index + 1, answer: null };
-    case "newAnswer": {
-      const question = state.questions.at(state.index);
-
-      return {
-        ...state,
-        answer: action.payload,
-        points:
-          action.payload === question.correctOption
-            ? state.points + question.points
-            : state.points,
-      };
-    }
-    case "restart":
-      return {
-        ...initialState,
-        questions: state.questions,
-        status: "ready",
-        highscore: state.highscore,
-      };
-
-    case "tick":
-      return {
-        ...state,
-        timeRemaining: state.timeRemaining - 1,
-        status: state.timeRemaining === 0 ? "finished" : state.status,
-      };
-
-    default:
-      throw new Error("Action is unknown");
-  }
-}
+import { useQuiz } from "./hooks/useQuiz";
 
 function App() {
-  const [
-    { questions, status, index, answer, points, highscore, timeRemaining },
-    dispatch,
-  ] = useReducer(reducer, initialState);
-  const questionsLength = questions.length;
-  const totalPoints = questions.reduce((acc, currentQuestion) => {
-    return currentQuestion.points + acc;
-  }, 0);
+  const { questions, status, index, dispatch } = useQuiz();
 
-  useEffect(function () {
-    async function fetchData() {
-      try {
-        const response = await fetch("http://localhost:8000/questions");
-        const data = await response.json();
-        dispatch({ type: "dataReceived", payload: data });
-      } catch (error) {
-        dispatch({ type: "error", payload: error });
+  useEffect(
+    function () {
+      async function fetchData() {
+        try {
+          const response = await fetch("http://localhost:8000/questions");
+          const data = await response.json();
+          dispatch({ type: "dataReceived", payload: data });
+        } catch (error) {
+          dispatch({ type: "error", payload: error });
+        }
       }
-    }
-    fetchData();
-  }, []);
+      fetchData();
+    },
+    [dispatch]
+  );
 
   return (
     <div className="app">
@@ -113,45 +38,18 @@ function App() {
       <Main>
         {status === "loading" && <Loader />}
         {status === "error" && <Error />}
-        {status === "ready" && (
-          <StartScreen
-            questionsLength={questionsLength}
-            dispatch={() => dispatch({ type: "active" })}
-          />
-        )}
+        {status === "ready" && <StartScreen />}
         {status === "active" && (
           <>
-            <Progress
-              index={index}
-              points={points}
-              totalPoints={totalPoints}
-              questionCount={questionsLength}
-              answer={answer}
-            />
-            <Question
-              question={questions[index]}
-              dispatch={dispatch}
-              answer={answer}
-            />
+            <Progress />
+            <Question question={questions[index]} />
             <Footer>
-              <Timer timeRemaining={timeRemaining} dispatch={dispatch} />{" "}
-              <NextButton
-                dispatch={dispatch}
-                answer={answer}
-                index={index}
-                questionsLength={questionsLength}
-              />
+              <Timer />
+              <NextButton />
             </Footer>
           </>
         )}
-        {status === "finished" && (
-          <FinishScreen
-            points={points}
-            totalPoints={totalPoints}
-            dispatch={dispatch}
-            highscore={highscore}
-          />
-        )}
+        {status === "finished" && <FinishScreen />}
       </Main>
     </div>
   );

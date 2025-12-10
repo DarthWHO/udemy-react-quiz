@@ -1,4 +1,7 @@
-function FinishScreen({ points, totalPoints, dispatch, highscore }) {
+import { useQuiz } from "../hooks/useQuiz";
+
+function FinishScreen() {
+  const { points, totalPoints, dispatch, highscore } = useQuiz();
   const percentage = Math.ceil((points / totalPoints) * 100);
 
   let emoji;

@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { useQuiz } from "../hooks/useQuiz";
 
-function Timer({ timeRemaining, dispatch }) {
+function Timer() {
+  const { timeRemaining, dispatch } = useQuiz();
   const mins = Math.floor(timeRemaining / 60);
   const secs = timeRemaining % 60;
   const formattedSecs = secs < 10 ? `0${secs}` : secs;
