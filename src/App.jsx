@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 import Header from "./components/Header";
 import Main from "./components/Main";
 import Loader from "./components/Loader";
@@ -14,23 +12,7 @@ import Footer from "./components/Footer";
 import { useQuiz } from "./hooks/useQuiz";
 
 function App() {
-  const { questions, status, index, dispatch } = useQuiz();
-
-  useEffect(
-    function () {
-      async function fetchData() {
-        try {
-          const response = await fetch("http://localhost:8000/questions");
-          const data = await response.json();
-          dispatch({ type: "dataReceived", payload: data });
-        } catch (error) {
-          dispatch({ type: "error", payload: error });
-        }
-      }
-      fetchData();
-    },
-    [dispatch]
-  );
+  const { status } = useQuiz();
 
   return (
     <div className="app">
@@ -42,7 +24,7 @@ function App() {
         {status === "active" && (
           <>
             <Progress />
-            <Question question={questions[index]} />
+            <Question />
             <Footer>
               <Timer />
               <NextButton />
